@@ -27,7 +27,6 @@ const doctorStateEls = {
   externalMeetingLink: document.getElementById('externalMeetingLink'),
   meetingPlaceholder: document.getElementById('meetingPlaceholder'),
   copyPatientLinkBtn: document.getElementById('copyPatientLinkBtn'),
-  createMeetingBtn: document.getElementById('createMeetingBtn'),
   deleteAppointmentBtn: document.getElementById('deleteAppointmentBtn'),
   resetAppointmentBtn: document.getElementById('resetAppointmentBtn'),
   notesInput: document.getElementById('doctorNotes'),
@@ -45,6 +44,7 @@ const patientStateEls = {
 
 const forms = {
   createAppointment: document.getElementById('createAppointmentForm'),
+  createMeeting: document.getElementById('createMeetingForm'),
 };
 
 const inputs = {
@@ -239,7 +239,6 @@ function hydrateFormDefaults() {
   if (inputs.patientName && !inputs.patientName.value) {
     inputs.patientName.value = defaultConfig.patient || '';
   }
-  onMeetingTypeChange(); // Initialize visibility
 }
 
 async function fetchJSON(url, options = {}) {
@@ -366,7 +365,8 @@ async function onCreateAppointment(event) {
   }
 }
 
-async function onCreateMeeting() {
+async function onCreateMeeting(event) {
+  event.preventDefault();
   const selectedType = document.querySelector('input[name="meetingType"]:checked').value;
   const payload = {};
 
@@ -428,7 +428,7 @@ function setView(view) {
 
 function wireEvents() {
   forms.createAppointment?.addEventListener('submit', onCreateAppointment);
-  doctorStateEls.createMeetingBtn?.addEventListener('click', onCreateMeeting);
+  forms.createMeeting?.addEventListener('submit', onCreateMeeting);
   doctorStateEls.deleteAppointmentBtn?.addEventListener('click', onDeleteAppointment);
   doctorStateEls.resetAppointmentBtn?.addEventListener('click', onDeleteAppointment);
   doctorStateEls.copyPatientLinkBtn?.addEventListener('click', onCopyPatientLink);
