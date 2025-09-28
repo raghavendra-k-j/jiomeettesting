@@ -21,7 +21,10 @@ const doctorStateEls = {
   doctorLink: document.getElementById('doctorLink'),
   patientLink: document.getElementById('patientLink'),
   providerLabel: document.getElementById('meetingProviderLabel'),
+  meetingTypeLabel: document.getElementById('meetingTypeLabel'),
   meetingFrame: document.getElementById('doctorMeetingFrame'),
+  externalMeetingContainer: document.getElementById('externalMeetingContainer'),
+  externalMeetingLink: document.getElementById('externalMeetingLink'),
   meetingPlaceholder: document.getElementById('meetingPlaceholder'),
   copyPatientLinkBtn: document.getElementById('copyPatientLinkBtn'),
   createMeetingBtn: document.getElementById('createMeetingBtn'),
@@ -47,6 +50,9 @@ const forms = {
 const inputs = {
   doctorName: document.getElementById('doctorNameInput'),
   patientName: document.getElementById('patientNameInput'),
+  meetingType: document.querySelectorAll('input[name="meetingType"]'),
+  externalUrl: document.getElementById('externalUrlInput'),
+  externalUrlContainer: document.getElementById('externalUrlContainer'),
 };
 
 doctorStateEls.meetingPlaceholderText = doctorStateEls.meetingPlaceholder ? doctorStateEls.meetingPlaceholder.querySelector('span') : null;
@@ -119,16 +125,25 @@ function showMeetingPlaceholder(show, message) {
   placeholder.classList.toggle('flex', show);
 }
 
-function updateMeetingFrame(url) {
-  if (!doctorStateEls.meetingFrame) return;
+function updateMeetingFrame(url, provider) {
+  if (!doctorStateEls.meetingFrame || !doctorStateEls.externalMeetingContainer || !doctorStateEls.externalMeetingLink) return;
   if (!url) {
     doctorStateEls.meetingFrame.src = 'about:blank';
+    doctorStateEls.externalMeetingContainer.classList.add('hidden');
     showMeetingPlaceholder(true, 'Meeting will appear here once it is created.');
     return;
   }
 
-  showMeetingPlaceholder(true, 'Loading your JioMeet room…');
-  doctorStateEls.meetingFrame.src = url;
+  if (provider === 'external') {
+    doctorStateEls.meetingFrame.src = 'about:blank';
+    doctorStateEls.externalMeetingContainer.classList.remove('hidden');
+    doctorStateEls.externalMeetingLink.href = url;
+    showMeetingPlaceholder(false);
+  } else {
+    doctorStateEls.externalMeetingContainer.classList.add('hidden');
+    showMeetingPlaceholder(true, 'Loading your JioMeet room…');
+    doctorStateEls.meetingFrame.src = url;
+  }
 }
 
 function getStorage() {
@@ -205,6 +220,18 @@ function clearNotes() {
   persistNotes('');
 }
 
+function onMeetingTypeChange() {
+  const selectedType = document.querySelector('input[name="meetingType"]:checked').value;
+  if (inputs.externalUrlContainer) {
+    inputs.externalUrlContainer.classList.toggle('hidden', selectedType !== 'external');
+  }
+  if (selectedType === 'external' && inputs.externalUrl) {
+    inputs.externalUrl.required = true;
+  } else if (inputs.externalUrl) {
+    inputs.externalUrl.required = false;
+  }
+}
+
 function hydrateFormDefaults() {
   if (inputs.doctorName && !inputs.doctorName.value) {
     inputs.doctorName.value = defaultConfig.doctor || '';
@@ -212,6 +239,7 @@ function hydrateFormDefaults() {
   if (inputs.patientName && !inputs.patientName.value) {
     inputs.patientName.value = defaultConfig.patient || '';
   }
+  onMeetingTypeChange(); // Initialize visibility
 }
 
 async function fetchJSON(url, options = {}) {
@@ -304,9 +332,10 @@ function renderState() {
     doctorStateEls.baseLink.textContent = meeting.base_url;
     doctorStateEls.doctorLink.textContent = meeting.doctor_url;
     doctorStateEls.patientLink.textContent = meeting.patient_url;
-    doctorStateEls.providerLabel.textContent = meeting.provider === 'mock' ? 'Mock provider' : 'JioMeet';
+    doctorStateEls.providerLabel.textContent = meeting.provider === 'mock' ? 'Mock provider' : meeting.provider === 'external' ? 'External provider' : 'JioMeet';
+    doctorStateEls.meetingTypeLabel.textContent = meeting.provider === 'external' ? 'External' : 'In-browser';
     patientStateEls.patientJoinLink.href = meeting.patient_url;
-    updateMeetingFrame(meeting.doctor_url);
+    updateMeetingFrame(meeting.doctor_url, meeting.provider);
   }
 }
 
@@ -338,8 +367,20 @@ async function onCreateAppointment(event) {
 }
 
 async function onCreateMeeting() {
+  const selectedType = document.querySelector('input[name="meetingType"]:checked').value;
+  const payload = {};
+
+  if (selectedType === 'external') {
+    const externalUrl = inputs.externalUrl?.value?.trim();
+    if (!externalUrl) {
+      renderAlert({ type: 'error', message: 'External URL is required.' });
+      return;
+    }
+    payload.external_url = externalUrl;
+  }
+
   try {
-    const data = await fetchJSON('/api/appointment/meeting', { method: 'POST' });
+    const data = await fetchJSON('/api/appointment/meeting', { method: 'POST', body: JSON.stringify(payload) });
     currentAppointment = data.appointment;
     renderState();
     renderAlert({ type: 'info', message: 'Meeting created successfully.' });
@@ -404,6 +445,9 @@ function wireEvents() {
   });
   doctorStateEls.resetAppointmentBtn?.addEventListener('click', () => showMeetingPlaceholder(false));
   patientStateEls.refreshBtn?.addEventListener('click', () => refreshAppointment({ showAlertOnError: true }));
+
+  // Meeting type change
+  inputs.meetingType.forEach(radio => radio.addEventListener('change', onMeetingTypeChange));
 
   viewButtons.doctor?.addEventListener('click', () => setView('doctor'));
   viewButtons.patient?.addEventListener('click', () => setView('patient'));

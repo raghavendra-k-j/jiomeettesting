@@ -78,6 +78,23 @@
                   <input id="patientNameInput" name="patientName" class="w-full rounded-2xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-brand-500" type="text" placeholder="Alex Smith" />
                 </div>
               </div>
+              <div class="space-y-3">
+                <label class="block text-sm font-medium text-slate-700">Meeting type</label>
+                <div class="flex gap-6">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="meetingType" value="jiomeet" checked class="text-brand-500 focus:ring-brand-500" />
+                    <span class="text-slate-700">JioMeet</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="meetingType" value="external" class="text-brand-500 focus:ring-brand-500" />
+                    <span class="text-slate-700">External URL</span>
+                  </label>
+                </div>
+              </div>
+              <div id="externalUrlContainer" class="hidden">
+                <label for="externalUrlInput" class="block text-sm font-medium text-slate-700 mb-2">External meeting URL</label>
+                <input id="externalUrlInput" name="externalUrl" class="w-full rounded-2xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-brand-500" type="url" placeholder="https://meet.google.com/..." />
+              </div>
               <button type="submit" class="inline-flex justify-center items-center gap-2 rounded-2xl bg-brand-500 hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 px-5 py-3 font-semibold text-white transition w-full md:w-auto">Create appointment</button>
             </form>
           </div>
@@ -89,7 +106,7 @@
               <p><span class="font-medium text-slate-700">Patient:</span> <span id="patientNameDisplay"></span></p>
             </div>
             <div class="flex flex-col sm:flex-row gap-3">
-              <button id="createMeetingBtn" class="inline-flex justify-center items-center gap-2 rounded-2xl bg-brand-500 hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 px-5 py-3 font-semibold text-white transition">Create JioMeet meeting</button>
+              <button id="createMeetingBtn" class="inline-flex justify-center items-center gap-2 rounded-2xl bg-brand-500 hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 px-5 py-3 font-semibold text-white transition">Create meeting</button>
               <button id="deleteAppointmentBtn" class="inline-flex justify-center items-center gap-2 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 px-5 py-3 font-semibold transition">Delete appointment</button>
             </div>
           </div>
@@ -102,10 +119,22 @@
                     <h3 class="text-lg font-semibold text-slate-900">Live meeting</h3>
                     <p class="text-sm text-slate-500">Powered by <span id="meetingProviderLabel" class="font-medium"></span></p>
                   </div>
-                  <span class="text-xs uppercase tracking-wide text-brand-500">In-browser</span>
+                  <span class="text-xs uppercase tracking-wide text-brand-500" id="meetingTypeLabel">In-browser</span>
                 </div>
                 <div class="relative flex-1 bg-white">
                   <iframe id="doctorMeetingFrame" title="JioMeet Meeting" class="w-full h-[60vh] lg:h-full border-0" allow="camera; microphone; fullscreen" referrerpolicy="origin"></iframe>
+                  <div id="externalMeetingContainer" class="hidden flex flex-col items-center justify-center h-[60vh] lg:h-full gap-4 p-8">
+                    <div class="text-center space-y-2">
+                      <h4 class="text-xl font-semibold text-slate-900">External Meeting</h4>
+                      <p class="text-slate-600">Click the button below to join the meeting in a new tab.</p>
+                    </div>
+                    <a id="externalMeetingLink" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex justify-center items-center gap-2 rounded-2xl bg-brand-500 hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 px-6 py-3 font-semibold text-white transition">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                      </svg>
+                      Join Meeting
+                    </a>
+                  </div>
                   <div id="meetingPlaceholder" class="absolute inset-0 hidden items-center justify-center bg-slate-100 text-slate-400 gap-2"><span class="text-sm font-medium">Meeting loading…</span></div>
                 </div>
               </div>

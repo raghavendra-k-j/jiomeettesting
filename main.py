@@ -29,6 +29,7 @@ logging.basicConfig(level=logging.INFO)
 class Provider(str, Enum):
 	JIOMEET = "jiomeet"
 	MOCK = "mock"
+	EXTERNAL = "external"
 
 
 class MeetingInfo(BaseModel):
@@ -60,6 +61,10 @@ class AppointmentCreateRequest(BaseModel):
 
 class AppointmentCreateResponse(BaseModel):
 	appointment: AppointmentState
+
+
+class MeetingCreateRequest(BaseModel):
+	external_url: Optional[str] = Field(default=None, description="External meeting URL (e.g., Zoom, Google Meet)")
 
 
 class MeetingCreateResponse(BaseModel):
@@ -317,6 +322,7 @@ def create_app() -> FastAPI:
 
 	@app.post("/api/appointment/meeting", response_model=MeetingCreateResponse)
 	async def create_meeting(
+		payload: MeetingCreateRequest,
 		store: AppointmentStore = Depends(get_store),
 		client: JioMeetClient = Depends(get_client),
 	) -> MeetingCreateResponse:
@@ -324,16 +330,26 @@ def create_app() -> FastAPI:
 		if appointment is None:
 			raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No appointment")
 
-		try:
-			meeting = await client.create_meeting(
-				doctor_name=appointment.doctor_name,
-				patient_name=appointment.patient_name,
-				description=f"Telehealth visit between {appointment.doctor_name} and {appointment.patient_name}",
+		if payload.external_url:
+			meeting = MeetingInfo(
+				provider=Provider.EXTERNAL,
+				base_url=payload.external_url,
+				doctor_url=payload.external_url,
+				patient_url=payload.external_url,
+				created_at=datetime.now(tz=timezone.utc),
+				host_token=None,
 			)
-		except Exception as exc:
-			logger.exception("Failed to create meeting: %s", exc)
-			await store.set_error(str(exc))
-			raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Unable to create meeting") from exc
+		else:
+			try:
+				meeting = await client.create_meeting(
+					doctor_name=appointment.doctor_name,
+					patient_name=appointment.patient_name,
+					description=f"Telehealth visit between {appointment.doctor_name} and {appointment.patient_name}",
+				)
+			except Exception as exc:
+				logger.exception("Failed to create meeting: %s", exc)
+				await store.set_error(str(exc))
+				raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Unable to create meeting") from exc
 
 		updated = await store.update(meeting)
 		return MeetingCreateResponse(appointment=updated)
