@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Doctor–Patient JioMeet Demo</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              500: '#2563eb',
+              600: '#1d4ed8',
+              700: '#1e40af'
+            },
+          },
+          keyframes: {
+            pulseReady: {
+              '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 0 rgba(37, 99, 235, 0)' },
+              '50%': { transform: 'scale(1.02)', boxShadow: '0 0 0.75rem rgba(37, 99, 235, 0.45)' }
+            }
+          },
+          animation: {
+            readyPulse: 'pulseReady 1.5s ease-in-out infinite'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-white to-sky-50 text-slate-900 min-h-screen">
+  <div class="max-w-6xl mx-auto py-12 px-4 lg:px-8">
+    <header class="bg-white/95 backdrop-blur rounded-3xl border border-slate-200 shadow-xl p-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div class="space-y-2">
+        <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Doctor–Patient JioMeet Demo</h1>
+        <p class="text-slate-600">Co-manage appointments, launch the JioMeet room, and keep track of your notes without leaving the page.</p>
+      </div>
+      <div class="flex gap-3 items-center">
+        <span class="uppercase text-xs tracking-[0.4em] text-slate-400">Viewing</span>
+        <div class="bg-slate-100 border border-slate-200 rounded-full p-1 flex gap-1 transition-all" role="tablist">
+          <button
+            id="doctorViewBtn"
+            class="px-4 py-2 text-sm font-semibold text-slate-600 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/70 hover:text-brand-600"
+            data-view="doctor"
+            role="tab"
+          >Doctor</button>
+          <button
+            id="patientViewBtn"
+            class="px-4 py-2 text-sm font-semibold text-slate-600 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/70 hover:text-brand-600"
+            data-view="patient"
+            role="tab"
+          >Patient</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mt-12 space-y-10">
+      <section id="alertContainer" class="hidden"></section>
+
+      <section id="doctorView" class="space-y-6">
+        <div class="bg-white border border-slate-200 rounded-3xl shadow-lg p-8 space-y-6">
+          <div class="space-y-2">
+            <h2 class="text-2xl font-semibold text-slate-900">Doctor dashboard</h2>
+            <p class="text-slate-600">Create the appointment, spin up the meeting, and collaborate in real time.</p>
+          </div>
+
+          <div id="doctorEmptyState" class="hidden space-y-6">
+            <form id="createAppointmentForm" class="space-y-5">
+              <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label for="doctorNameInput" class="block text-sm font-medium text-slate-700 mb-2">Doctor name</label>
+                  <input id="doctorNameInput" name="doctorName" class="w-full rounded-2xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-brand-500" type="text" placeholder="Dr. Jane Doe" required />
+                </div>
+                <div>
+                  <label for="patientNameInput" class="block text-sm font-medium text-slate-700 mb-2">Patient name</label>
+                  <input id="patientNameInput" name="patientName" class="w-full rounded-2xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-brand-500" type="text" placeholder="Alex Smith" />
+                </div>
+              </div>
+              <button type="submit" class="inline-flex justify-center items-center gap-2 rounded-2xl bg-brand-500 hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 px-5 py-3 font-semibold text-white transition w-full md:w-auto">Create appointment</button>
+            </form>
+          </div>
+
+          <div id="doctorPendingMeeting" class="hidden space-y-6">
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 space-y-2">
+              <h3 class="text-xl font-semibold text-slate-900">Appointment ready</h3>
+              <p><span class="font-medium text-slate-700">Doctor:</span> <span id="doctorNameDisplay"></span></p>
+              <p><span class="font-medium text-slate-700">Patient:</span> <span id="patientNameDisplay"></span></p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <button id="createMeetingBtn" class="inline-flex justify-center items-center gap-2 rounded-2xl bg-brand-500 hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 px-5 py-3 font-semibold text-white transition">Create JioMeet meeting</button>
+              <button id="deleteAppointmentBtn" class="inline-flex justify-center items-center gap-2 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 px-5 py-3 font-semibold transition">Delete appointment</button>
+            </div>
+          </div>
+
+          <div id="doctorMeetingLive" class="hidden space-y-6">
+            <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
+                  <div>
+                    <h3 class="text-lg font-semibold text-slate-900">Live meeting</h3>
+                    <p class="text-sm text-slate-500">Powered by <span id="meetingProviderLabel" class="font-medium"></span></p>
+                  </div>
+                  <span class="text-xs uppercase tracking-wide text-brand-500">In-browser</span>
+                </div>
+                <div class="relative flex-1 bg-white">
+                  <iframe id="doctorMeetingFrame" title="JioMeet Meeting" class="w-full h-[60vh] lg:h-full border-0" allow="camera; microphone; fullscreen" referrerpolicy="origin"></iframe>
+                  <div id="meetingPlaceholder" class="absolute inset-0 hidden items-center justify-center bg-slate-100 text-slate-400 gap-2"><span class="text-sm font-medium">Meeting loading…</span></div>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-slate-200 bg-white p-6 flex flex-col gap-5">
+                <div class="space-y-1">
+                  <h3 class="text-lg font-semibold text-slate-900">Visit notes</h3>
+                  <p class="text-sm text-slate-500">Captured locally in your browser for quick reference during the call.</p>
+                </div>
+                <textarea id="doctorNotes" class="flex-1 min-h-[200px] rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:border-brand-500 focus:ring-brand-500 resize-none" placeholder="Type notes here…"></textarea>
+                <div class="flex flex-wrap gap-3 items-center">
+                  <button id="copyPatientLinkBtn" class="inline-flex justify-center items-center gap-2 rounded-2xl border border-brand-300 text-brand-600 bg-brand-50 hover:bg-brand-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 px-4 py-2 font-medium transition">Copy patient link</button>
+                  <button id="resetAppointmentBtn" class="inline-flex justify-center items-center gap-2 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 px-4 py-2 font-medium transition">End appointment</button>
+                  <button id="clearNotesBtn" class="inline-flex justify-center items-center gap-2 rounded-2xl border border-rose-200 text-rose-600 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400 px-4 py-2 font-medium transition">Clear notes</button>
+                  <span id="notesStatus" class="text-xs text-slate-400">Saved locally</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
+              <h3 class="text-lg font-semibold text-slate-900">Quick links</h3>
+              <div class="grid gap-4 md:grid-cols-3">
+                <div class="space-y-1">
+                  <span class="text-xs uppercase tracking-wide text-slate-400">Base link</span>
+                  <p class="break-all font-mono text-sm text-brand-600" id="baseLink"></p>
+                </div>
+                <div class="space-y-1">
+                  <span class="text-xs uppercase tracking-wide text-slate-400">Doctor auto-join</span>
+                  <p class="break-all font-mono text-sm text-brand-600" id="doctorLink"></p>
+                </div>
+                <div class="space-y-1">
+                  <span class="text-xs uppercase tracking-wide text-slate-400">Patient auto-join</span>
+                  <p class="break-all font-mono text-sm text-brand-600" id="patientLink"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="patientView" class="space-y-6 hidden">
+        <div class="bg-white border border-slate-200 rounded-3xl shadow-lg p-8 space-y-6">
+          <div class="space-y-2">
+            <h2 class="text-2xl font-semibold text-slate-900">Patient lobby</h2>
+            <p class="text-slate-600">Stay on this page—we'll let you know the moment your doctor is ready.</p>
+          </div>
+
+          <div id="patientNoAppointment" class="rounded-2xl border border-slate-200 bg-slate-50 p-5 space-y-2">
+            <h3 class="text-lg font-semibold text-slate-900">No appointment yet</h3>
+            <p class="text-slate-600">Please wait for the clinic to schedule your session.</p>
+          </div>
+
+          <div id="patientWaiting" class="rounded-2xl border border-amber-200 bg-amber-50 p-5 space-y-3 hidden">
+            <h3 class="text-lg font-semibold text-amber-700">Hold tight</h3>
+            <p class="text-amber-700/80">Your doctor is getting things ready. We’ll refresh automatically every few seconds.</p>
+            <button class="inline-flex justify-center items-center gap-2 rounded-2xl border border-amber-300 text-amber-700 bg-white hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 px-4 py-2 font-medium transition" id="patientRefreshBtn">Refresh now</button>
+          </div>
+
+          <div id="patientReady" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 space-y-3 hidden">
+            <h3 class="text-lg font-semibold text-emerald-700">You’re up!</h3>
+            <p class="text-emerald-700/80">Click join to head straight into the appointment.</p>
+            <a id="patientJoinLink" class="inline-flex justify-center items-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 px-5 py-3 font-semibold text-white transition" href="#" target="_blank" rel="noreferrer">Join appointment</a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script id="app-defaults" type="application/json">{{ defaults | tojson | safe }}</script>
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>

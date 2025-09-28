@@ -1,0 +1,207 @@
+Quick StartAuthentication
+Version: current
+Authentication in JioMeet
+We understand the importance of secure and seamless authentication processes to ensure a safe environment for your video calling experience.
+
+General Security Recommendations
+Here are some essential security recommendations for JSON Web Tokens (JWT), which apply to both One Step and Two Step Authentication, offered by Jiomeet:
+
+Keep Secrets Secure: Treat your authentication secrets, private keys, and tokens with the utmost care. Store them in a secure environment, and never expose them publicly.
+
+Use Short-Lived Tokens: Create short-lived tokens that expire quickly. This practice reduces the window of opportunity for potential misuse.
+
+Token Validation: Always validate incoming tokens on your server before processing any requests. Ensure the token's integrity and origin.
+
+HTTPS Usage: Employ HTTPS for all API calls to prevent eavesdropping and unauthorized access.
+
+Regular Updates: Keep your authentication libraries, frameworks, and dependencies up to date to leverage the latest security enhancements.
+
+One-Step Authentication with HS256 JWT for JioMeet API Access
+One Step Authentication is a simple and effective method for securing your JioMeet interactions.
+
+Prequisites
+Before proceeding, ensure you have the following:
+
+A secret from the JioMeet platform.
+Get the app id for your app from the app section
+Note: The secrets are only available to download once you generate the app. Once you redirect from the screen, JioMeet does not show the secret for security. Ensure you download the secret and store it in a safe location.
+
+Here's how it works:
+
+During app creation in the "Apps" section, a secret is generated for your app.
+To authenticate, create a JSON Web Token (JWT) signed using the secret you get after creating the room from JioMeet Platform. Use the HMAC SHA-256 (HS256) algorithm to sign the token.
+Utilize the generated JWT to make API calls to JioMeet, by authenticating your identity.
+For enhanced security, store the JWT in your backend and generate short-lived tokens.
+JWT Generation Process
+Prepare Your Payload:
+
+Your payload should include an "app" field with your JioMeet app ID.
+Sign the Token:
+
+Use the HS256 algorithm to sign the token.
+Sample JavaScript Code
+const jwt = require('jsonwebtoken');
+
+// Replace with your actual JioMeet app ID and secret key.
+const appID = 'your-app-id';
+const secretKey = 'your-secret-key';
+
+// Prepare the payload.
+const payload = {
+  app: appID,
+  // Add other claims as needed.
+};
+
+// Sign the token.
+const token = jwt.sign(payload, secretKey, { algorithm: 'HS256' });
+
+console.log('Generated JWT:', token);
+
+Two-Step Authentication with RS256 JWT for JioMeet API Access
+To enhance security when accessing the JioMeet APIs, a two-step authentication process can be employed using a private-public key model with the RS256 algorithm. This guide outlines the steps to create a JWT for two-step authentication.
+
+Two Step Authentication offers an additional layer of security by employing public and private keys:
+
+When you create an app, JioMeet generates a private key and a corresponding public key. You need to store these keys safely on your side for later use.
+To authenticate, sign the token using the private key with the RS256 algorithm.
+JioMeet's server verifies the token's authenticity using the public key.
+Similar to One Step Authentication, consider storing the token in your backend and using short-lived tokens.
+Note: The private and public keys are only available to download once you generate the app. Once you redirect from the screen, JioMeet does not show the keys for security. Ensure you download the keys and store them in a safe location.
+
+Prerequisites
+Before proceeding, ensure you have the following:
+
+A private key and corresponding public key pair.
+Get the app id for your app from the app section
+Step 1: Prepare Your Payload
+Your payload should include an "app" field with your JioMeet app ID.
+Additional claims can be included as needed.
+Step 2: Sign the Token
+Use the RS256 algorithm to sign the token using your private key.
+Sample JavaScript Code
+const fs = require('fs');
+const jwt = require('jsonwebtoken');
+
+// Replace with your actual JioMeet app ID.
+const appID = 'your-app-id';
+
+// Load your private key.
+const privateKey = fs.readFileSync('path/to/your/private/key.pem');
+
+// Prepare the payload.
+const payload = {
+  app: appID,
+  // Add other claims as needed.
+};
+
+// Sign the token with RS256.
+const token = jwt.sign(payload, privateKey, { algorithm: 'RS256' });
+
+console.log('Generated JWT:', token);
+
+Conclusion
+By implementing either One Step or Two Step Authentication, you'll ensure that your JioMeet experience remains secure and enjoyable. Remember, safeguarding your tokens and keys is key to maintaining a safe video calling environment. If you have any questions or need further assistance, feel free to explore our comprehensive documentation or reach out to our dedicated support team.
+
+Secure your JioMeet experience today and connect with confidence!
+
+
+
+JioMeet Platform Server APIsCreate a dynamic meeting
+Version: current
+Create a dynamic meeting
+This API allows you to provision a dynamic meeting. Dynamic meetings are valid for 24 hours from the time of creation.
+
+Header Parameters
+Content-Type string
+The content type should be application/json
+
+Example: application/json
+Authorization string required
+You need an app created on the JioMeet Platform and using the app credentials you can create a JWT to access this API. The JWT should have an issuer and the key "app" with the app id generated from the Plaform.
+
+Example: <Authentication_token_signed_using_secret_or_private_key>
+application/json
+Request Body
+name string
+name of the user creating the meeting
+
+title string
+title of the meeting
+
+description string
+description for the meeting
+
+hostToken boolean
+This boolean describes whether to return a host token or not. A host token can be used to join a meeting as a host
+
+isAutoRecordingEnabled boolean
+This boolean describes whether to auto recording the call. The recording starts automatically when there are more than 1 user in the call if this flag is enabled
+
+Responses
+200
+401
+412
+Success
+
+application/json
+Schema
+Example (from schema)
+Example1
+Schema
+jiomeetId string
+The 10 digit unique ID of the meeting
+
+roomPIN string
+Meeting PIN that secures the meeting from unwanted access
+
+subdomain string
+The JioMeet subdomain this meeting will run in
+
+joinEndpoint string
+The endpoint path for joining the guestMeetingLink/meetingLink.
+
+hostToken string
+This identifier allows a user to join with host privileges. To allow a user to join as host, append this parameter in the query parameters of the meetingLink/guestMeetingLink. "hostToken" is the query change
+
+guestMeetingLink string
+The meeting link that the users will use to join the meeting. These users will be guest users and hence wont have any privileges to alter any meeting settings.
+
+meetingLink string
+The meeting link with your custom sub-domain that the users will use to join the meeting. These users will be guest users and hence wont have any privileges to alter any meeting settings.
+
+POST /api/platform/v1/room
+Request
+Base URL
+https://jiomeetpro.jio.com
+Authorization — header required
+You need an app created on the JioMeet Platform and using the app credentials you can create a JWT to access this API. The JWT should have an issuer and the key "app" with the app id generated from the Plaform.
+Body
+{
+  "name": "name of the user creating the meeting",
+  "title": "title of the meeting",
+  "description": "description for the meeting",
+  "hostToken": false
+}
+python / requests
+import requests
+import json
+
+url = "https://jiomeetpro.jio.com/api/platform/v1/room"
+
+payload = json.dumps({
+  "name": "name of the user creating the meeting",
+  "title": "title of the meeting",
+  "description": "description for the meeting",
+  "hostToken": False
+})
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json'
+}
+
+response = requests.request("POST", url, headers=headers, data=payload)
+
+print(response.text)
+
+Previous
+Check Recording Status
